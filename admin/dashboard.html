@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+
+<body class="dashboard-body">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <strong>Admin</strong>
+      <span>Panel</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a class="active" href="dashboard.html">Dashboard</a>
+      <a href="rifas.html">Rifas</a>
+      <a>Compras</a>
+      <a>Tickets</a>
+      <a>Usuarios</a>
+    </nav>
+
+    <button id="logoutBtn" class="logout-btn">Cerrar sesión</button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="dashboard-main">
+    <button class="menu-toggle" id="menuToggle">☰</button>
+
+    <h1 class="dashboard-title">Resumen general</h1>
+
+    <!-- COMPRAS PENDIENTES -->
+
+
+
+
+<div class="stats-grid">
+
+  <div class="stat-box">
+    <h4>Total compras</h4>
+    <p id="statTotalPurchases">0</p>
+  </div>
+
+  <div class="stat-box">
+    <h4>Tickets comprados</h4>
+    <p id="statTotalTickets">0</p>
+  </div>
+
+  <div class="stat-box">
+    <h4>Total en Bs</h4>
+    <p id="statTotalAmount">Bs 0</p>
+  </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+    <section class="stat-card" style="margin-top:30px">
+      <h3>Compras pendientes</h3>
+
+      <div class="table-wrapper">
+        <table class="dashboard-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Teléfono</th>
+              <th>Banco</th>
+              <th>Referencia</th>
+              <th>Números</th>
+              <th>Total</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="purchasesTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+
+
+
+
+
+<section class="stat-card" style="margin-top:30px">
+  <h3>Compras aprobadas</h3>
+
+  <div class="table-wrapper">
+    <table class="dashboard-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Teléfono</th>
+          <th>Números</th>
+          <th>Total</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody id="approvedTable"></tbody>
+    </table>
+  </div>
+</section>
+
+
+
+
+
+
+
+  </main>
+
+  <!-- FIREBASE INIT -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyB6BUBXhC3oU1JlBCEvkqLwe6lx4JHNduI",
+      authDomain: "rifas-new.firebaseapp.com",
+      projectId: "rifas-new",
+      appId: "1:681549310378:web:4945b09ba6f258ae08a3d3"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let checked = false;
+    auth.onAuthStateChanged(user => {
+      if (!checked) {
+        checked = true;
+        if (!user) window.location.href = "login.html";
+      }
+    });
+  </script>
+
+  <!-- LOGOUT -->
+  <script>
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      firebase.auth().signOut().then(() => {
+        window.location.href = "login.html";
+      });
+    });
+  </script>
+
+  <!-- MENU -->
+  <script>
+    const menuToggle = document.getElementById("menuToggle");
+    const sidebar = document.querySelector(".sidebar");
+
+    menuToggle.addEventListener("click", e => {
+      e.stopPropagation();
+      sidebar.classList.toggle("open");
+    });
+
+    document.addEventListener("click", e => {
+      if (
+        sidebar.classList.contains("open") &&
+        !sidebar.contains(e.target) &&
+        !menuToggle.contains(e.target)
+      ) {
+        sidebar.classList.remove("open");
+      }
+    });
+  </script>
+
+  <!-- COMPRAS OPTIMIZADAS -->
+  <script>
+    const purchasesTable = document.getElementById("purchasesTable");
+
+    async function loadPurchases() {
+      purchasesTable.innerHTML = "";
+
+      const snapshot = await db
+        .collection("purchases")
+        .where("status", "==", "pending")
+        .orderBy("createdAt", "desc")
+        .limit(50) // 🔥 límite para no quemar lecturas
+        .get();
+
+      snapshot.forEach(doc => {
+        const p = doc.data();
+
+        purchasesTable.innerHTML += `
+          <tr>
+            <td>${p.buyerName}</td>
+            <td>${p.buyerPhone}</td>
+            <td>${p.bank}</td>
+            <td>${p.reference}</td>
+            <td>
+              <div class="numbers-mini">
+                ${p.numbers.map(n => `<span>${n}</span>`).join("")}
+              </div>
+            </td>
+            <td>Bs ${p.total}</td>
+            <td style="color:#facc15;font-weight:600">Pendiente</td>
+            <td>
+              <button onclick="approvePurchase('${doc.id}')">✅</button>
+              <button onclick="rejectPurchase('${doc.id}')" style="color:red">❌</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    loadPurchases();
+
+    async function approvePurchase(purchaseId) {
+      if (!confirm("¿Aprobar esta compra?")) return;
+
+      const purchaseRef = db.collection("purchases").doc(purchaseId);
+      const purchaseSnap = await purchaseRef.get();
+      const purchase = purchaseSnap.data();
+
+      const batch = db.batch();
+
+      batch.update(purchaseRef, {
+  status: "approved",
+  ticketsSent: false
+});
+
+
+
+
+
+
+      const numbersQuery = await db.collection("numbers")
+        .where("raffleId", "==", purchase.raffleId)
+        .where("number", "in", purchase.numbers)
+        .get();
+
+      numbersQuery.forEach(doc => {
+        batch.update(doc.ref, { status: "sold" });
+      });
+
+      await batch.commit();
+
+      localStorage.removeItem(`numbers_${purchase.raffleId}`);
+
+      alert("Compra aprobada");
+      loadPurchases();
+    }
+
+    async function rejectPurchase(purchaseId) {
+      if (!confirm("¿Rechazar esta compra?")) return;
+
+      const purchaseRef = db.collection("purchases").doc(purchaseId);
+      const purchaseSnap = await purchaseRef.get();
+      const purchase = purchaseSnap.data();
+
+      const batch = db.batch();
+
+      batch.update(purchaseRef, { status: "rejected" });
+
+      const numbersQuery = await db.collection("numbers")
+        .where("raffleId", "==", purchase.raffleId)
+        .where("number", "in", purchase.numbers)
+        .get();
+
+      numbersQuery.forEach(doc => {
+        batch.update(doc.ref, { status: "available" });
+      });
+
+      await batch.commit();
+
+      localStorage.removeItem(`numbers_${purchase.raffleId}`);
+
+      alert("Compra rechazada");
+      loadPurchases();
+    }
+  </script>
+
+
+
+
+
+
+
+
+
+
+<script>
+  const approvedTable = document.getElementById("approvedTable");
+
+  function formatDate(ts) {
+    if (!ts) return "-";
+    return ts.toDate().toLocaleString("es-VE");
+  }
+
+  async function loadApprovedPurchases() {
+    approvedTable.innerHTML = "";
+
+    const snapshot = await db
+      .collection("purchases")
+      .where("status", "==", "approved")
+      .orderBy("createdAt", "desc")
+      .limit(100)
+      .get();
+
+    snapshot.forEach(doc => {
+      const p = doc.data();
+      const sent = p.ticketsSent === true;
+
+      approvedTable.innerHTML += `
+        <tr>
+          <td>${p.buyerName}</td>
+          <td>${p.buyerPhone}</td>
+          <td>${p.numbers.join(", ")}</td>
+          <td>Bs ${p.total}</td>
+          <td>${formatDate(p.createdAt)}</td>
+          <td>
+            ${
+  sent
+    ? `<button class="btn-sent" disabled>Enviados</button>`
+    : `<button class="btn-send" onclick="sendTickets('${doc.id}')">
+         Enviar tickets
+       </button>`
+}
+          </td>
+        </tr>
+      `;
+    });
+  }
+
+  loadApprovedPurchases();
+</script>
+
+
+
+
+
+
+<script>
+  const statTotalPurchases = document.getElementById("statTotalPurchases");
+  const statTotalTickets = document.getElementById("statTotalTickets");
+  const statTotalAmount = document.getElementById("statTotalAmount");
+
+  async function loadApprovedStats() {
+    let totalPurchases = 0;
+    let totalTickets = 0;
+    let totalAmount = 0;
+
+    const snapshot = await db
+      .collection("purchases")
+      .where("status", "==", "approved")
+      .get();
+
+    snapshot.forEach(doc => {
+      const p = doc.data();
+      totalPurchases++;
+      totalTickets += p.numbers.length;
+      totalAmount += p.total;
+    });
+
+    statTotalPurchases.textContent = totalPurchases;
+    statTotalTickets.textContent = totalTickets;
+    statTotalAmount.textContent =
+      "Bs " + totalAmount.toLocaleString("es-VE");
+  }
+
+  loadApprovedStats();
+</script>
+
+
+
+
+
+
+
+
+<script>
+async function sendTickets(purchaseId) {
+  try {
+    // 1️⃣ Obtener la compra
+    const docRef = db.collection("purchases").doc(purchaseId);
+    const docSnap = await docRef.get();
+
+    if (!docSnap.exists) {
+      alert("La compra no existe");
+      return;
+    }
+
+    const p = docSnap.data();
+
+    // 2️⃣ Construir mensaje de WhatsApp
+    const message = `
+*TICKETS DE RIFA CONFIRMADOS*
+
+Hola ${p.buyerName}
+
+Tu compra ha sido *APROBADA*.
+
+*Numeros comprados:*
+${p.numbers.join(", ")}
+
+*Total pagado:* Bs ${p.total}
+*Banco:* ${p.bank}
+*Referencia:* ${p.reference}
+
+Gracias por participar.
+Mucha suerte.
+`;
+
+
+    // 3️⃣ Abrir WhatsApp Web
+    
+
+
+let phone = p.buyerPhone.replace(/\D/g, "");
+
+if (phone.startsWith("0")) {
+  phone = "58" + phone.substring(1);
+}
+
+
+
+
+
+
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank");
+
+    // 4️⃣ Marcar tickets como enviados
+    await docRef.update({
+      ticketsSent: true
+    });
+
+    // 5️⃣ Recargar tabla
+    loadApprovedPurchases();
+
+  } catch (err) {
+    console.error(err);
+    alert("Error al enviar los tickets");
+  }
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

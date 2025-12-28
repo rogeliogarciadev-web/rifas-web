@@ -1,0 +1,80 @@
+
+
+/* ---------- LOGIN ---------- */
+
+.login-body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top, #020617, #000);
+  font-family: system-ui, sans-serif;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 360px;
+  background: rgba(15,23,42,.95);
+  border: 1px solid rgba(148,163,184,.35);
+  border-radius: 20px;
+  padding: 24px 20px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.8);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.login-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.login-subtitle {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-bottom: 10px;
+}
+
+.login-card input {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,.4);
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 13px;
+}
+
+.login-card button {
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 12px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #22c55e, #4ade80);
+  color: #022c22;
+}
+
+.login-error {
+  font-size: 11px;
+  color: #f87171;
+  text-align: center;
+}
+
+
+
+/* ---------- DASHBOARD ---------- */
+
+.logout-btn {
+  background: transparent;
+  border: 1px solid rgba(148,163,184,.4);
+  color: #e5e7eb;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background: rgba(15,23,42,.9);
+}

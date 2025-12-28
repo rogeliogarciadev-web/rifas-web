@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Rifas</title>
+
+  <!-- Firebase compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body class="dashboard-body">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <strong>Admin</strong>
+      <span>Panel</span>
+    </div>
+
+
+
+<nav class="sidebar-nav">
+      <a href="dashboard.html">Dashboard</a>
+      <a class="active" href="rifas.html">Rifas</a>
+      <a>Compras</a>
+      <a>Tickets</a>
+      <a>Usuarios</a>
+    </nav>
+
+
+
+    <button id="logoutBtn" class="logout-btn">Cerrar sesión</button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="dashboard-main">
+    <button class="menu-toggle" id="menuToggle">☰</button>
+    <h1 class="dashboard-title">Gestión de Rifas</h1>
+
+    <!-- CREAR RIFA -->
+    <section class="stat-card" style="margin-bottom:20px">
+      <h3>Crear nueva rifa</h3>
+
+      <input id="raffleTitle" placeholder="Título de la rifa">
+      <input id="raffleTotalNumbers" type="number" placeholder="Cantidad de números">
+      <input id="rafflePrice" type="number" placeholder="Precio por número (Bs)">
+      <input id="raffleDrawDate" type="datetime-local" placeholder="Fecha del sorteo">
+
+
+      <button id="btnCreateRaffle">Crear rifa</button>
+    </section>
+
+    <!-- LISTA DE RIFAS -->
+    <section class="stat-card">
+      <h3>Rifas creadas</h3>
+
+      <table style="width:100%; font-size:14px">
+        <thead>
+          <tr>
+            <th align="left">Título</th>
+            <th>Cant. números</th>
+            <th>Precio (Bs)</th>
+            <th>Fecha sorteo</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="rafflesTable">
+          <!-- se llena por JS -->
+        </tbody>
+      </table>
+    </section>
+
+  </main>
+
+  <!-- FIREBASE INIT -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyB6BUBXhC3oU1JlBCEvkqLwe6lx4JHNduI",
+    authDomain: "rifas-new.firebaseapp.com",
+    projectId: "rifas-new",
+    storageBucket: "rifas-new.firebasestorage.app",
+    messagingSenderId: "681549310378",
+    appId: "1:681549310378:web:4945b09ba6f258ae08a3d3"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Proteger ruta
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "login.html";
+      }
+    });
+  </script>
+
+  <!-- LOGOUT -->
+  <script>
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      firebase.auth().signOut().then(() => {
+        window.location.href = "login.html";
+      });
+    });
+  </script>
+
+  <!-- MENU MOBILE -->
+  <script>
+    const menuToggle = document.getElementById("menuToggle");
+    const sidebar = document.querySelector(".sidebar");
+
+    menuToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      sidebar.classList.toggle("open");
+    });
+
+    document.addEventListener("click", (e) => {
+      if (
+        sidebar.classList.contains("open") &&
+        !sidebar.contains(e.target) &&
+        !menuToggle.contains(e.target)
+      ) {
+        sidebar.classList.remove("open");
+      }
+    });
+
+    sidebar.addEventListener("click", e => e.stopPropagation());
+  </script>
+
+  <!-- CREAR + LISTAR RIFAS -->
+ <script>
+  const btnCreateRaffle = document.getElementById("btnCreateRaffle");
+  const rafflesTable = document.getElementById("rafflesTable");
+
+  btnCreateRaffle.addEventListener("click", async () => {
+    const title = raffleTitle.value.trim();
+    const totalNumbers = Number(raffleTotalNumbers.value);
+    const pricePerNumber = Number(rafflePrice.value);
+    const drawDateValue = raffleDrawDate.value;
+
+    if (
+      !title ||
+      totalNumbers <= 0 ||
+      pricePerNumber <= 0 ||
+      !drawDateValue
+    ) {
+      alert("Completa todos los campos correctamente");
+      return;
+    }
+
+    const drawDate = firebase.firestore.Timestamp.fromDate(
+      new Date(drawDateValue)
+    );
+
+    await db.collection("raffles").add({
+      title,
+      totalNumbers,
+      pricePerNumber,
+      currency: "VES",
+      status: "active",
+      drawDate,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    raffleTitle.value = "";
+    raffleTotalNumbers.value = "";
+    rafflePrice.value = "";
+    raffleDrawDate.value = "";
+  });
+</script>
+
+
+
+
+
+
+
+<script>
+  db.collection("raffles")
+    .orderBy("createdAt", "desc")
+    .onSnapshot(snapshot => {
+      rafflesTable.innerHTML = "";
+
+      snapshot.forEach(doc => {
+        const r = doc.data();
+
+        const drawDate = r.drawDate
+          ? r.drawDate.toDate().toLocaleString("es-VE")
+          : "-";
+
+        rafflesTable.innerHTML += `
+          <tr>
+            <td>${r.title}</td>
+            <td align="center">${r.totalNumbers}</td>
+            <td align="center">Bs ${r.pricePerNumber}</td>
+            <td align="center">${drawDate}</td>
+            <td align="center">${r.status}</td>
+            <td>
+              ${
+                !r.numbersGenerated
+                  ? `<button onclick="generateNumbers('${doc.id}', ${r.totalNumbers})">
+                       Generar números
+                     </button>`
+                  : `<small>✔ Generados</small>`
+              }
+              <br>
+              <button onclick="deleteRaffle('${doc.id}')" style="color:red">
+                Eliminar
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+    });
+</script>
+
+
+
+
+
+
+
+
+
+<script>
+  async function deleteRaffle(raffleId) {
+    const confirmDelete = confirm(
+      "¿Seguro que deseas eliminar esta rifa?\nEsta acción no se puede deshacer."
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await db.collection("raffles").doc(raffleId).delete();
+      alert("Rifa eliminada correctamente");
+    } catch (error) {
+      console.error(error);
+      alert("Error al eliminar la rifa");
+    }
+  }
+</script>
+
+
+
+<script>
+async function generateNumbers(raffleId, totalNumbers) {
+  const confirmGen = confirm(
+    `Se generarán ${totalNumbers} números.\n¿Deseas continuar?`
+  );
+
+  if (!confirmGen) return;
+
+  try {
+    const numbersRef = db.collection("numbers");
+    let batch = db.batch();
+    let count = 0;
+
+    for (let i = 0; i < totalNumbers; i++) {
+      const num = String(i).padStart(3, "0"); // 👈 STRING SIEMPRE
+      const docRef = numbersRef.doc();
+
+      batch.set(docRef, {
+        raffleId: raffleId,
+        number: num,          // 👈 STRING
+        status: "available"
+      });
+
+      count++;
+
+      if (count === 500) {
+        await batch.commit();
+        batch = db.batch();
+        count = 0;
+      }
+    }
+
+    if (count > 0) {
+      await batch.commit();
+    }
+
+    await db.collection("raffles").doc(raffleId).update({
+      numbersGenerated: true
+    });
+
+    alert("Números generados correctamente (000–999)");
+
+  } catch (err) {
+    console.error(err);
+    alert("Error al generar números");
+  }
+}
+</script>
+
+
+
+
+
+
+
+</body>
+</html>
