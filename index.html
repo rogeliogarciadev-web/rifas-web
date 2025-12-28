@@ -1019,22 +1019,33 @@ finishBtn.addEventListener("click", async () => {
 
 
 
-<a
-  href="https://wa.me/14066407851?text=Hola%20necesito%20soporte%20con%20la%20rifa"
-  class="whatsapp-float"
-  target="_blank"
-  rel="noopener"
->
-  <div class="whatsapp-icon">
-    <svg viewBox="0 0 32 32">
-      <path
-        fill="currentColor"
-        d="M19.11 17.2c-.27-.14-1.64-.8-1.9-.9-.26-.1-.45-.14-.64.14-.19.27-.73.9-.9 1.08-.17.19-.34.21-.61.07-.27-.14-1.16-.43-2.2-1.36-.81-.72-1.36-1.61-1.52-1.88-.16-.27-.02-.42.12-.56.12-.12.27-.32.4-.48.13-.16.18-.27.27-.45.09-.18.05-.34-.02-.48-.07-.14-.64-1.54-.88-2.12-.23-.55-.47-.48-.64-.49-.17-.01-.36-.01-.55-.01-.19 0-.5.07-.76.34-.26.27-1 1-1 2.44 0 1.44 1.03 2.83 1.17 3.03.14.19 2.03 3.1 4.92 4.35.69.3 1.22.48 1.64.61.69.22 1.32.19 1.82.12.55-.08 1.64-.67 1.87-1.32.23-.65.23-1.21.16-1.32-.07-.11-.26-.18-.53-.32z"
-      />
-    </svg>
-  </div>
-  <span class="whatsapp-text">Hola, ¿necesitas ayuda? Escríbenos por WhatsApp</span>
+<a href="https://api.whatsapp.com/send?phone=14066407851&text=Hola%20soporte" 
+   target="_blank" 
+   id="whatsappSupport"
+   title="Escribir a soporte">
+  💬 WhatsApp
 </a>
+
+
+
+<script>
+  const whatsappBtn = document.getElementById("whatsappSupport");
+
+  // Función para verificar si algún modal está abierto
+  function updateWhatsappVisibility() {
+    const anyModalOpen = document.querySelectorAll('.modal-toggle:checked').length > 0;
+    whatsappBtn.style.display = anyModalOpen ? 'none' : 'flex';
+  }
+
+  // Ejecutar al cargar
+  updateWhatsappVisibility();
+
+  // Observar cambios en los checkboxes de los modales
+  const modals = document.querySelectorAll('.modal-toggle');
+  modals.forEach(modal => {
+    modal.addEventListener('change', updateWhatsappVisibility);
+  });
+</script>
 
 
 
@@ -1046,3 +1057,4 @@ finishBtn.addEventListener("click", async () => {
 
 </body>
 </html>
+
