@@ -1349,59 +1349,39 @@
 
 
 
-.whatsapp-float {
+/* Estilo flotante */
+#whatsappSupport {
   position: fixed;
-  bottom: 18px;
-  right: 18px;
-  background: white; /* Fondo limpio */
-  color: #25d366;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
-  border-radius: 50px;
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.25);
-  z-index: 999;
-  transition: transform .2s ease, box-shadow .2s ease;
-}
-
-.whatsapp-float:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-}
-
-.whatsapp-icon {
-  background: #25d366;
+  bottom: 20px;
+  right: 20px;
+  background-color: #25D366; /* Verde WhatsApp */
   color: white;
+  font-weight: bold;
+  padding: 12px 16px;
+  border-radius: 50px;
+  text-decoration: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  flex-shrink: 0;
+  z-index: 9999; /* siempre arriba */
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  transition: transform 0.2s ease;
+  font-size: 16px;
 }
 
-.whatsapp-icon svg {
-  width: 20px;
-  height: 20px;
+/* Efecto hover */
+#whatsappSupport:hover {
+  transform: scale(1.1);
 }
 
-.whatsapp-text {
-  display: inline-block;
-  white-space: nowrap;
-}
-
-/* Para que en móvil se vea el texto también */
+/* Móvil: reducir tamaño */
 @media (max-width: 600px) {
-  .whatsapp-float {
+  #whatsappSupport {
+    bottom: 15px;
+    right: 15px;
+    font-size: 14px;
     padding: 10px 14px;
-    font-size: 13px;
-  }
-  .whatsapp-text {
-    white-space: normal;
   }
 }
+
+
